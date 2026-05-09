@@ -90,34 +90,50 @@
     <!-- Stats cards -->
     <div class="row g-3 mb-4">
       <div class="col-6 col-md-3">
-        <div class="card stat-card border-0 shadow-sm h-100">
+        <div class="card stat-card border-0 shadow-sm h-100" style="cursor:pointer"
+             onclick="showView('family')" title="View all family members">
           <div class="card-body text-center">
             <div class="stat-number text-primary" id="statPeople">—</div>
             <div class="stat-label">Family Members</div>
+            <div class="small text-muted mt-1" style="font-size:0.7rem">
+              <i class="bi bi-arrow-right-circle"></i> View all
+            </div>
           </div>
         </div>
       </div>
       <div class="col-6 col-md-3">
-        <div class="card stat-card border-0 shadow-sm h-100">
+        <div class="card stat-card border-0 shadow-sm h-100" style="cursor:pointer"
+             onclick="showView('medical')" title="View medical records">
           <div class="card-body text-center">
             <div class="stat-number text-success" id="statRecords">—</div>
             <div class="stat-label">Medical Records</div>
+            <div class="small text-muted mt-1" style="font-size:0.7rem">
+              <i class="bi bi-arrow-right-circle"></i> View all
+            </div>
           </div>
         </div>
       </div>
       <div class="col-6 col-md-3">
-        <div class="card stat-card border-0 shadow-sm h-100">
+        <div class="card stat-card border-0 shadow-sm h-100" style="cursor:pointer"
+             onclick="showMedicalHighPriority()" title="View high-priority records">
           <div class="card-body text-center">
             <div class="stat-number text-danger" id="statHigh">—</div>
             <div class="stat-label">High-Priority Records</div>
+            <div class="small text-muted mt-1" style="font-size:0.7rem">
+              <i class="bi bi-arrow-right-circle"></i> View high
+            </div>
           </div>
         </div>
       </div>
       <div class="col-6 col-md-3">
-        <div class="card stat-card border-0 shadow-sm h-100">
+        <div class="card stat-card border-0 shadow-sm h-100" style="cursor:pointer"
+             onclick="showView('family')" title="View family tree">
           <div class="card-body text-center">
             <div class="stat-number text-info" id="statBranches">—</div>
             <div class="stat-label">Family Branches</div>
+            <div class="small text-muted mt-1" style="font-size:0.7rem">
+              <i class="bi bi-arrow-right-circle"></i> View tree
+            </div>
           </div>
         </div>
       </div>

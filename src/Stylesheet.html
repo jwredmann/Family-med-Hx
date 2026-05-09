@@ -45,6 +45,11 @@ body {
 .stat-card {
   border-radius: 12px;
   background: #fff;
+  transition: box-shadow 0.18s, transform 0.18s;
+}
+.stat-card:hover {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15) !important;
+  transform: translateY(-3px);
 }
 .stat-number {
   font-size: 2.2rem;

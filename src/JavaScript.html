@@ -136,6 +136,12 @@ function showView(name) {
   window.scrollTo(0, 0);
 }
 
+function showMedicalHighPriority() {
+  showView('medical');
+  var tierEl = document.getElementById('medTier');
+  if (tierEl) { tierEl.value = 'High'; filterMedical(); }
+}
+
 // ── Stats ─────────────────────────────────────────────────────────────
 
 function updateStats() {
