@@ -1,0 +1,581 @@
+<script>
+// =====================================================================
+// Redmann Family Medical History — JavaScript.html
+// Client-Side Logic
+// =====================================================================
+
+var appData   = null;
+var isAdmin   = false;
+var userBranch = '';
+var userName   = '';
+
+// ── Init ──────────────────────────────────────────────────────────────
+
+window.onload = function () {
+  loadAppData(false);
+};
+
+function loadAppData(adminMode) {
+  google.script.run
+    .withSuccessHandler(function (data) {
+      if (data.success) {
+        appData = data;
+        initApp();
+      } else {
+        showLoadError(data.error);
+      }
+    })
+    .withFailureHandler(function (err) {
+      showLoadError(err.message || 'Unknown error loading data.');
+    })
+    .getAppData(userBranch, adminMode || isAdmin);
+}
+
+function initApp() {
+  populateAllDropdowns();
+  updateStats();
+  showView('dashboard');
+  renderDashboard();
+}
+
+// ── Dropdowns ─────────────────────────────────────────────────────────
+
+function populateAllDropdowns() {
+  var branches   = appData.branches   || [];
+  var categories = appData.categories || [];
+  var generations = appData.generations || [];
+
+  // Identity selector (navbar)
+  var userSel = document.getElementById('userBranchSelect');
+  branches.forEach(function (b) { userSel.add(new Option(b, b)); });
+
+  // Filter dropdowns — branches
+  ['filterBranch', 'medBranch'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) branches.forEach(function (b) { el.add(new Option(b, b)); });
+  });
+
+  // Filter dropdowns — generations
+  var genFilter = document.getElementById('filterGeneration');
+  if (genFilter) {
+    generations.forEach(function (g) {
+      genFilter.add(new Option(g.label, g.value));
+    });
+  }
+
+  // Medical categories filter
+  var catFilter = document.getElementById('medCategory');
+  if (catFilter) {
+    categories.forEach(function (c) { catFilter.add(new Option(c, c)); });
+  }
+
+  // Add-person: branch & generation
+  var addBranch = document.getElementById('addPersonBranch');
+  if (addBranch) branches.forEach(function (b) { addBranch.add(new Option(b, b)); });
+
+  var addGen = document.getElementById('addPersonGeneration');
+  if (addGen) {
+    generations.forEach(function (g) { addGen.add(new Option(g.label, g.value)); });
+    addGen.value = 'Gen6'; // sensible default
+  }
+
+  // Add-record: categories
+  var recCat = document.getElementById('recordCategory');
+  if (recCat) categories.forEach(function (c) { recCat.add(new Option(c, c)); });
+
+  // Add-record: person list
+  populatePersonSelect();
+}
+
+function populatePersonSelect() {
+  var sel = document.getElementById('recordPersonSelect');
+  if (!sel || !appData) return;
+  // Clear existing except placeholder
+  while (sel.options.length > 1) sel.remove(1);
+
+  var sorted = (appData.people || []).slice().sort(function (a, b) {
+    return (a.LastName + a.FirstName).localeCompare(b.LastName + b.FirstName);
+  });
+  sorted.forEach(function (p) {
+    sel.add(new Option(formatName(p), p.ID));
+  });
+}
+
+// ── Identity ──────────────────────────────────────────────────────────
+
+function setUserIdentity(branch) {
+  userBranch = branch;
+  // Pre-fill "entered by" fields with the branch label as a starting point
+  var name = branch || '';
+  userName = name;
+  ['recordEnteredBy', 'addPersonEnteredBy'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el && !el.value) el.value = name;
+  });
+  // Refresh medical records with updated branch filter
+  if (appData) filterMedical();
+}
+
+// ── Views ─────────────────────────────────────────────────────────────
+
+var VIEWS = ['loading', 'dashboard', 'family', 'medical', 'addPerson', 'addRecord', 'admin'];
+
+function showView(name) {
+  VIEWS.forEach(function (v) {
+    var el = document.getElementById(v + 'View');
+    if (el) el.style.display = 'none';
+  });
+  var target = document.getElementById(name + 'View');
+  if (target) target.style.display = 'block';
+
+  if (name === 'family')    renderFamilyList(appData ? appData.people : []);
+  if (name === 'medical')   renderMedicalList(appData ? appData.medical : []);
+  if (name === 'admin' && isAdmin) renderAdminPanel();
+  if (name === 'addRecord') populatePersonSelect();
+
+  window.scrollTo(0, 0);
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────
+
+function updateStats() {
+  var p = appData.people  || [];
+  var m = appData.medical || [];
+  document.getElementById('statPeople').textContent   = p.length;
+  document.getElementById('statRecords').textContent  = m.length;
+  document.getElementById('statHigh').textContent     = m.filter(function (r) { return r.Tier === 'High'; }).length;
+  document.getElementById('statBranches').textContent = (appData.branches || []).length;
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────
+
+function renderDashboard() {
+  var medical = appData.medical || [];
+
+  // High-priority panel
+  var high = medical.filter(function (r) { return r.Tier === 'High'; }).slice(0, 10);
+  var hpEl = document.getElementById('dashHighPriority');
+  hpEl.innerHTML = high.length
+    ? high.map(function (r) {
+        return '<div class="dash-strip high">' +
+          '<strong>' + esc(r.PersonName) + '</strong>: ' + esc(r.Condition) +
+          '<br><small class="text-muted">' + esc(r.Category) + ' | ' + esc(r.Status) + '</small>' +
+          '</div>';
+      }).join('')
+    : '<p class="text-muted small">No high-priority records yet.</p>';
+
+  // Recently added panel
+  var recent = medical.slice().sort(function (a, b) {
+    return String(b.DateEntered).localeCompare(String(a.DateEntered));
+  }).slice(0, 6);
+  var rEl = document.getElementById('dashRecent');
+  rEl.innerHTML = recent.length
+    ? recent.map(function (r) {
+        var date = r.DateEntered ? String(r.DateEntered).split('T')[0] : '';
+        return '<div class="dash-strip recent">' +
+          '<strong>' + esc(r.PersonName) + '</strong>: ' + esc(r.Condition) +
+          '<br><small class="text-muted">' + esc(date) + '</small>' +
+          '</div>';
+      }).join('')
+    : '<p class="text-muted small">No records yet. ' +
+      '<a href="#" onclick="showView(\'addRecord\')">Add the first one</a>.</p>';
+}
+
+// ── Family Members ─────────────────────────────────────────────────────
+
+function renderFamilyList(people) {
+  var container = document.getElementById('familyList');
+  if (!people || people.length === 0) {
+    container.innerHTML = '<div class="col-12"><p class="text-muted">No family members found.</p></div>';
+    return;
+  }
+
+  // Group by generation
+  var groups = {};
+  people.forEach(function (p) {
+    var g = p.Generation || 'Unknown';
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(p);
+  });
+
+  var genOrder  = ['Gen0','Gen1','Gen2','Gen3','Gen4','Gen5','Gen6','Gen7','Unknown'];
+  var genLabels = {
+    Gen0: 'Distant Ancestors',
+    Gen1: 'Great-Great-Grandparents',
+    Gen2: 'Great-Grandparents',
+    Gen3: 'Grandparents — Morris & Esther Redmann',
+    Gen4: "Parents' Generation (grandparents' children)",
+    Gen5: "John's Generation — the 8 siblings",
+    Gen6: 'Children of the Siblings',
+    Gen7: 'Grandchildren',
+    Unknown: 'Other'
+  };
+
+  var html = '';
+  genOrder.forEach(function (gen) {
+    if (!groups[gen]) return;
+    html += '<div class="col-12 mt-3 mb-1"><p class="gen-heading">' +
+            (genLabels[gen] || gen) + '</p></div>';
+    groups[gen].forEach(function (p) {
+      var medCount = (appData.medical || []).filter(function (m) { return m.PersonID === p.ID; }).length;
+      var isDeceased = p.DOD ? true : false;
+      html += '<div class="col-6 col-md-4 col-lg-3">' +
+        '<div class="card person-card border-0 shadow-sm h-100" onclick="showPersonDetail(\'' + p.ID + '\')">' +
+        '<div class="card-body">' +
+        '<h6 class="card-title text-primary">' + esc(formatName(p)) + '</h6>' +
+        (p.RelationshipToJohn ? '<div class="text-muted small">' + esc(p.RelationshipToJohn) + '</div>' : '') +
+        (p.FamilyBranch && p.FamilyBranch !== 'Ancestors'
+          ? '<div class="text-muted small">' + esc(p.FamilyBranch) + '</div>' : '') +
+        '<div class="small mt-1">' +
+        (p.DOB ? '<span class="text-muted">b. ' + esc(String(p.DOB)) + '</span>' : '') +
+        (isDeceased ? ' <span class="text-muted">d. ' + esc(String(p.DOD)) + '</span>' : '') +
+        '</div>' +
+        (medCount > 0
+          ? '<span class="badge bg-info text-dark mt-1">' + medCount + ' record' + (medCount > 1 ? 's' : '') + '</span>'
+          : '') +
+        '</div></div></div>';
+    });
+  });
+
+  container.innerHTML = html || '<div class="col-12"><p class="text-muted">No results.</p></div>';
+}
+
+function filterFamily() {
+  if (!appData) return;
+  var branch  = document.getElementById('filterBranch').value;
+  var gen     = document.getElementById('filterGeneration').value;
+  var search  = document.getElementById('filterSearch').value.toLowerCase();
+  var filtered = (appData.people || []).filter(function (p) {
+    if (branch && p.FamilyBranch !== branch) return false;
+    if (gen    && p.Generation   !== gen)    return false;
+    if (search) {
+      var name = (p.FirstName + ' ' + p.LastName + ' ' + (p.Nickname || '')).toLowerCase();
+      if (name.indexOf(search) === -1) return false;
+    }
+    return true;
+  });
+  renderFamilyList(filtered);
+}
+
+// ── Person Detail Modal ────────────────────────────────────────────────
+
+function showPersonDetail(personId) {
+  var person = (appData.people || []).find(function (p) { return p.ID === personId; });
+  if (!person) return;
+  var medRecords = (appData.medical || []).filter(function (m) { return m.PersonID === personId; });
+
+  document.getElementById('personModalTitle').textContent = formatName(person);
+
+  var html = '<div class="row mb-3">' +
+    '<div class="col-md-6">' +
+    row('Relationship', person.RelationshipToJohn) +
+    row('Family Branch', person.FamilyBranch) +
+    row('Generation', person.Generation) +
+    '</div><div class="col-md-6">' +
+    (person.DOB ? row('Born',     String(person.DOB)) : '') +
+    (person.DOD ? row('Deceased', String(person.DOD)) : '') +
+    (person.Notes ? row('Notes', person.Notes) : '') +
+    '</div></div>' +
+    '<h6 class="border-bottom pb-1 fw-bold">Medical History (' + medRecords.length + ' record' + (medRecords.length !== 1 ? 's' : '') + ')</h6>';
+
+  if (medRecords.length === 0) {
+    html += '<p class="text-muted small">No medical records on file.</p>';
+  } else {
+    var tierOrder = { High: 0, Medium: 1, Low: 2 };
+    medRecords.sort(function (a, b) {
+      return (tierOrder[a.Tier] || 9) - (tierOrder[b.Tier] || 9);
+    });
+    html += medRecords.map(function (m) {
+      var cls = m.Tier === 'High' ? 'danger' : m.Tier === 'Medium' ? 'warning' : 'secondary';
+      return '<div class="card mb-2 border-' + cls + '">' +
+        '<div class="card-body py-2 px-3">' +
+        '<div class="d-flex justify-content-between align-items-start">' +
+        '<strong class="small">' + esc(m.Condition) + '</strong>' +
+        '<span class="badge tier-' + (m.Tier || 'low').toLowerCase() + ' ms-2">' + esc(m.Tier) + '</span>' +
+        '</div>' +
+        '<div class="text-muted small">' + esc(m.Category) + ' · ' + esc(m.Status) + '</div>' +
+        (m.AgeAtDiagnosis ? '<div class="small">Age at diagnosis: ' + esc(String(m.AgeAtDiagnosis)) + '</div>' : '') +
+        (m.Notes ? '<div class="small text-muted">' + esc(m.Notes) + '</div>' : '') +
+        '</div></div>';
+    }).join('');
+  }
+
+  html += '<div class="mt-3">' +
+    '<button class="btn btn-success btn-sm" onclick="' +
+    'bootstrap.Modal.getInstance(document.getElementById(\'personModal\')).hide();' +
+    'prefillPerson(\'' + personId + '\');showView(\'addRecord\')">' +
+    '<i class="bi bi-plus-circle"></i> Add record for ' + esc(person.FirstName) +
+    '</button></div>';
+
+  document.getElementById('personModalBody').innerHTML = html;
+  new bootstrap.Modal(document.getElementById('personModal')).show();
+}
+
+function prefillPerson(personId) {
+  var sel = document.getElementById('recordPersonSelect');
+  if (sel) sel.value = personId;
+}
+
+function row(label, value) {
+  if (!value) return '';
+  return '<p class="mb-1 small"><strong>' + esc(label) + ':</strong> ' + esc(String(value)) + '</p>';
+}
+
+// ── Medical History ────────────────────────────────────────────────────
+
+function renderMedicalList(records) {
+  var container = document.getElementById('medicalList');
+  if (!records || records.length === 0) {
+    container.innerHTML = '<p class="text-muted">No medical records found. ' +
+      '<a href="#" onclick="showView(\'addRecord\')">Add the first record</a>.</p>';
+    return;
+  }
+
+  var tierOrder = { High: 0, Medium: 1, Low: 2 };
+  var sorted = records.slice().sort(function (a, b) {
+    return (tierOrder[a.Tier] || 9) - (tierOrder[b.Tier] || 9);
+  });
+
+  var rows = sorted.map(function (m) {
+    var rowCls = m.Tier === 'High' ? 'row-high' : m.Tier === 'Medium' ? 'row-medium' : '';
+    var badgeCls = m.Tier === 'High' ? 'tier-high' : m.Tier === 'Medium' ? 'tier-medium' : 'tier-low';
+    var privCls  = m.PrivacyLevel === 'Public' ? 'success' : m.PrivacyLevel === 'BranchOnly' ? 'info' : 'dark';
+    return '<tr class="' + rowCls + '">' +
+      '<td><strong>' + esc(m.PersonName) + '</strong></td>' +
+      '<td>' + esc(m.Condition) + '</td>' +
+      '<td><span class="badge bg-secondary small">' + esc(m.Category) + '</span></td>' +
+      '<td><span class="badge ' + badgeCls + '">' + esc(m.Tier) + '</span></td>' +
+      '<td class="small">' + esc(m.Status) + '</td>' +
+      '<td class="small">' + esc(String(m.AgeAtDiagnosis || '')) + '</td>' +
+      '<td class="small text-muted">' + esc(m.Notes || '') + '</td>' +
+      '<td><span class="badge bg-' + privCls + ' small">' + esc(m.PrivacyLevel) + '</span></td>' +
+      '</tr>';
+  }).join('');
+
+  container.innerHTML = '<div class="table-responsive">' +
+    '<table class="table table-hover table-bordered table-sm medical-table mb-0">' +
+    '<thead><tr>' +
+    '<th>Person</th><th>Condition</th><th>Category</th>' +
+    '<th>Priority</th><th>Status</th><th>Age Dx</th><th>Notes</th><th>Privacy</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
+function filterMedical() {
+  if (!appData) return;
+  var branch   = document.getElementById('medBranch').value;
+  var tier     = document.getElementById('medTier').value;
+  var category = document.getElementById('medCategory').value;
+  var search   = document.getElementById('medSearch').value.toLowerCase();
+
+  var filtered = (appData.medical || []).filter(function (m) {
+    if (tier     && m.Tier     !== tier)     return false;
+    if (category && m.Category !== category) return false;
+    if (search) {
+      var text = ((m.Condition || '') + ' ' + (m.PersonName || '')).toLowerCase();
+      if (text.indexOf(search) === -1) return false;
+    }
+    return true;
+  });
+  renderMedicalList(filtered);
+}
+
+// ── Add Person ────────────────────────────────────────────────────────
+
+function submitAddPerson(event) {
+  event.preventDefault();
+  var form = event.target;
+  var data = {
+    firstName:    form.firstName.value.trim(),
+    lastName:     form.lastName.value.trim(),
+    nickname:     form.nickname.value.trim(),
+    dob:          form.dob.value.trim(),
+    dod:          form.dod.value.trim(),
+    relationship: form.relationship.value.trim(),
+    generation:   form.generation.value,
+    familyBranch: form.familyBranch.value,
+    email:        form.email.value.trim(),
+    notes:        form.notes.value.trim()
+  };
+  var enteredBy = form.enteredBy.value.trim() || userName || 'Family Member';
+  setBusy(form, true);
+
+  google.script.run
+    .withSuccessHandler(function (result) {
+      setBusy(form, false);
+      if (result.success) {
+        showToast('Person added successfully!', 'success');
+        form.reset();
+        refreshData(function () { showView('family'); });
+      } else {
+        showToast('Error: ' + result.error, 'danger');
+      }
+    })
+    .withFailureHandler(function (err) {
+      setBusy(form, false);
+      showToast('Error: ' + (err.message || 'Unknown error'), 'danger');
+    })
+    .addPerson(data, enteredBy);
+}
+
+// ── Add Medical Record ─────────────────────────────────────────────────
+
+function submitAddRecord(event) {
+  event.preventDefault();
+  var form     = event.target;
+  var personId = form.personId.value;
+  var person   = (appData.people || []).find(function (p) { return p.ID === personId; });
+  var enteredBy = form.enteredBy.value.trim() || userName || 'Family Member';
+
+  var data = {
+    personId:         personId,
+    personName:       person ? (person.FirstName + ' ' + person.LastName) : '',
+    condition:        form.condition.value.trim(),
+    category:         form.category.value,
+    tier:             form.tier.value,
+    ageAtDiagnosis:   form.ageAtDiagnosis.value.trim(),
+    yearDiagnosed:    form.yearDiagnosed.value.trim(),
+    status:           form.status.value,
+    notes:            form.notes.value.trim(),
+    privacyLevel:     form.privacyLevel.value,
+    visibleToBranches: userBranch
+  };
+  setBusy(form, true);
+
+  google.script.run
+    .withSuccessHandler(function (result) {
+      setBusy(form, false);
+      if (result.success) {
+        showToast('Medical record saved!', 'success');
+        form.reset();
+        refreshData(function () { showView('medical'); });
+      } else {
+        showToast('Error: ' + result.error, 'danger');
+      }
+    })
+    .withFailureHandler(function (err) {
+      setBusy(form, false);
+      showToast('Error: ' + (err.message || 'Unknown error'), 'danger');
+    })
+    .addMedicalRecord(data, enteredBy);
+}
+
+// ── Admin ──────────────────────────────────────────────────────────────
+
+function showAdminLogin() {
+  if (isAdmin) { showView('admin'); return; }
+  document.getElementById('adminPwError').style.display = 'none';
+  document.getElementById('adminPwInput').value = '';
+  new bootstrap.Modal(document.getElementById('adminModal')).show();
+  setTimeout(function () { document.getElementById('adminPwInput').focus(); }, 400);
+}
+
+function submitAdminLogin() {
+  var pw = document.getElementById('adminPwInput').value;
+  google.script.run
+    .withSuccessHandler(function (ok) {
+      if (ok) {
+        isAdmin = true;
+        bootstrap.Modal.getInstance(document.getElementById('adminModal')).hide();
+        document.getElementById('adminNavItem').style.display = 'block';
+        document.getElementById('adminPwInput').value = '';
+        refreshData(function () { showView('admin'); });
+      } else {
+        document.getElementById('adminPwError').style.display = 'block';
+      }
+    })
+    .checkAdminPassword(pw);
+}
+
+function renderAdminPanel() {
+  var people  = appData.people  || [];
+  var medical = appData.medical || [];
+
+  // Summary
+  var high   = medical.filter(function (m) { return m.Tier === 'High'; }).length;
+  var medium = medical.filter(function (m) { return m.Tier === 'Medium'; }).length;
+  var low    = medical.filter(function (m) { return m.Tier === 'Low'; }).length;
+  document.getElementById('adminSummary').innerHTML =
+    '<p class="small mb-1"><strong>Family members:</strong> ' + people.length + '</p>' +
+    '<p class="small mb-1"><strong>Medical records:</strong> ' + medical.length + '</p>' +
+    '<p class="small mb-1 text-danger"><strong>High priority:</strong> ' + high + '</p>' +
+    '<p class="small mb-1 text-warning"><strong>Medium priority:</strong> ' + medium + '</p>' +
+    '<p class="small mb-0 text-muted"><strong>Low priority:</strong> ' + low + '</p>';
+
+  // People table
+  var pHtml = '<div class="table-responsive"><table class="table table-sm table-hover mb-0 medical-table">' +
+    '<thead><tr><th>ID</th><th>Name</th><th>Generation</th><th>Branch</th><th>Relationship</th></tr></thead><tbody>' +
+    people.map(function (p) {
+      return '<tr><td class="text-muted small">' + esc(p.ID) + '</td>' +
+        '<td><strong>' + esc(formatName(p)) + '</strong></td>' +
+        '<td class="small">' + esc(p.Generation) + '</td>' +
+        '<td class="small">' + esc(p.FamilyBranch) + '</td>' +
+        '<td class="small">' + esc(p.RelationshipToJohn) + '</td></tr>';
+    }).join('') +
+    '</tbody></table></div>';
+  document.getElementById('adminPeople').innerHTML = pHtml;
+
+  // Medical table (admin sees all)
+  renderMedicalList(medical);
+  var medEl = document.getElementById('adminMedical');
+  medEl.innerHTML = document.getElementById('medicalList').innerHTML;
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────
+
+function refreshData(callback) {
+  google.script.run
+    .withSuccessHandler(function (data) {
+      if (data.success) {
+        appData = data;
+        updateStats();
+        renderDashboard();
+        populatePersonSelect();
+      }
+      if (callback) callback();
+    })
+    .getAppData(userBranch, isAdmin);
+}
+
+function formatName(p) {
+  var name = (p.FirstName || '') + ' ' + (p.LastName || '');
+  if (p.Nickname) name += ' ("' + p.Nickname + '")';
+  return name.trim();
+}
+
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function setBusy(form, busy) {
+  var btn = form.querySelector('button[type="submit"]');
+  if (!btn) return;
+  btn.disabled = busy;
+  btn.innerHTML = busy
+    ? '<span class="spinner-border spinner-border-sm me-1"></span>Saving…'
+    : '<i class="bi bi-save"></i> Save';
+}
+
+function showToast(message, type) {
+  var div = document.createElement('div');
+  div.className = 'alert alert-' + type + ' alert-dismissible fade show toast-alert';
+  div.innerHTML = message +
+    '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+  document.body.appendChild(div);
+  setTimeout(function () { div.remove(); }, 4500);
+}
+
+function showLoadError(msg) {
+  document.getElementById('loadingView').innerHTML =
+    '<div class="alert alert-danger mx-auto mt-5" style="max-width:500px">' +
+    '<i class="bi bi-exclamation-triangle-fill me-2"></i>' +
+    '<strong>Could not load data.</strong><br>' +
+    (msg || '') +
+    '<br><br><small>If this is your first time, make sure you have run ' +
+    '<strong>setupDatabase()</strong> in the Apps Script editor.</small></div>';
+}
+</script>

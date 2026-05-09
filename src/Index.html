@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <base target="_top">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <?!= include('Stylesheet'); ?>
+</head>
+<body>
+
+<!-- ── Navigation ──────────────────────────────────────────────────── -->
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top" id="mainNav">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#" onclick="showView('dashboard')">
+      <i class="bi bi-heart-pulse-fill me-2"></i>Redmann Family Medical History
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="#" onclick="showView('dashboard')">
+            <i class="bi bi-house"></i> Home
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" onclick="showView('family')">
+            <i class="bi bi-people"></i> Family Members
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" onclick="showView('medical')">
+            <i class="bi bi-clipboard2-pulse"></i> Medical History
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" onclick="showView('addRecord')">
+            <i class="bi bi-plus-circle"></i> Add Record
+          </a>
+        </li>
+        <li class="nav-item" id="adminNavItem" style="display:none">
+          <a class="nav-link text-warning" href="#" onclick="showView('admin')">
+            <i class="bi bi-shield-lock"></i> Admin
+          </a>
+        </li>
+      </ul>
+      <div class="d-flex align-items-center gap-2 mt-2 mt-lg-0">
+        <select class="form-select form-select-sm identity-select" id="userBranchSelect"
+                onchange="setUserIdentity(this.value)" style="min-width:180px">
+          <option value="">— Who are you? —</option>
+        </select>
+        <button class="btn btn-sm btn-outline-warning" onclick="showAdminLogin()">
+          <i class="bi bi-shield-lock"></i> Admin
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Main Content ─────────────────────────────────────────────────── -->
+<div class="container-fluid py-3 px-3 px-md-4" id="appBody">
+
+  <!-- Loading -->
+  <div id="loadingView" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status" style="width:3rem;height:3rem"></div>
+    <p class="mt-3 text-muted fs-5">Loading family data…</p>
+  </div>
+
+  <!-- ── Dashboard ──────────────────────────────────────────────────── -->
+  <div id="dashboardView" class="view" style="display:none">
+    <div class="row align-items-center mb-4">
+      <div class="col">
+        <h2 class="fw-bold text-primary mb-1">
+          <i class="bi bi-house-heart"></i> Welcome
+        </h2>
+        <p class="text-muted mb-0">
+          A private record of the Redmann family's medical history across generations.
+          Information here helps all family members understand hereditary health patterns.
+        </p>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-success" onclick="showView('addRecord')">
+          <i class="bi bi-plus-circle"></i> Add Medical Record
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-sm h-100">
+          <div class="card-body text-center">
+            <div class="stat-number text-primary" id="statPeople">—</div>
+            <div class="stat-label">Family Members</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-sm h-100">
+          <div class="card-body text-center">
+            <div class="stat-number text-success" id="statRecords">—</div>
+            <div class="stat-label">Medical Records</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-sm h-100">
+          <div class="card-body text-center">
+            <div class="stat-number text-danger" id="statHigh">—</div>
+            <div class="stat-label">High-Priority Records</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card stat-card border-0 shadow-sm h-100">
+          <div class="card-body text-center">
+            <div class="stat-number text-info" id="statBranches">—</div>
+            <div class="stat-label">Family Branches</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary panels -->
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header section-header">
+            <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+            High-Priority Medical Records
+          </div>
+          <div class="card-body" id="dashHighPriority">
+            <p class="text-muted small">Loading…</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header section-header">
+            <i class="bi bi-clock-history text-success me-2"></i>
+            Recently Added
+          </div>
+          <div class="card-body" id="dashRecent">
+            <p class="text-muted small">Loading…</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Family tree summary -->
+    <div class="card border-0 shadow-sm mt-3">
+      <div class="card-header section-header">
+        <i class="bi bi-diagram-3 text-primary me-2"></i>
+        Redmann Family Tree — At a Glance
+      </div>
+      <div class="card-body small text-muted">
+        <strong class="text-dark">Ancestors:</strong>
+        Timothy O'Brien (1823–1873) + Margaret Abbie Collins →
+        Ellen Maria O'Brien (1851–1941) + Joseph Vincent Redmann (1845–1920)<br>
+        <strong class="text-dark">Grandparents:</strong>
+        Morris Benjamin Redmann Sr. (1896–1955) + Esther Alice Joyce (1899–1956) — 9 sons, 1 daughter<br>
+        <strong class="text-dark">John's Generation:</strong>
+        John W. Redmann, Sr. and 7 siblings — 40+ family members total
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Family Members ─────────────────────────────────────────────── -->
+  <div id="familyView" class="view" style="display:none">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3 class="text-primary fw-bold mb-0">
+        <i class="bi bi-people"></i> Family Members
+      </h3>
+      <button class="btn btn-success btn-sm" onclick="showView('addPerson')">
+        <i class="bi bi-person-plus"></i> Add Person
+      </button>
+    </div>
+    <!-- Filters -->
+    <div class="row g-2 mb-3">
+      <div class="col-12 col-md-4">
+        <select class="form-select form-select-sm" id="filterBranch" onchange="filterFamily()">
+          <option value="">All Family Branches</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-4">
+        <select class="form-select form-select-sm" id="filterGeneration" onchange="filterFamily()">
+          <option value="">All Generations</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-4">
+        <input class="form-control form-control-sm" id="filterSearch"
+               placeholder="Search by name…" oninput="filterFamily()">
+      </div>
+    </div>
+    <div id="familyList" class="row g-3"></div>
+  </div>
+
+  <!-- ── Medical History ────────────────────────────────────────────── -->
+  <div id="medicalView" class="view" style="display:none">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3 class="text-primary fw-bold mb-0">
+        <i class="bi bi-clipboard2-pulse"></i> Medical History
+      </h3>
+      <button class="btn btn-success btn-sm" onclick="showView('addRecord')">
+        <i class="bi bi-plus-circle"></i> Add Record
+      </button>
+    </div>
+    <!-- Filters -->
+    <div class="row g-2 mb-3">
+      <div class="col-6 col-md-3">
+        <select class="form-select form-select-sm" id="medBranch" onchange="filterMedical()">
+          <option value="">All Branches</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <select class="form-select form-select-sm" id="medTier" onchange="filterMedical()">
+          <option value="">All Priorities</option>
+          <option value="High">High Priority</option>
+          <option value="Medium">Medium Priority</option>
+          <option value="Low">Low Priority</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <select class="form-select form-select-sm" id="medCategory" onchange="filterMedical()">
+          <option value="">All Categories</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <input class="form-control form-control-sm" id="medSearch"
+               placeholder="Search condition or name…" oninput="filterMedical()">
+      </div>
+    </div>
+    <div id="medicalList"></div>
+  </div>
+
+  <!-- ── Add Person ─────────────────────────────────────────────────── -->
+  <div id="addPersonView" class="view" style="display:none">
+    <h3 class="text-primary fw-bold mb-3">
+      <i class="bi bi-person-plus"></i> Add Family Member
+    </h3>
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <form id="addPersonForm" onsubmit="submitAddPerson(event)">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="firstName" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="lastName" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Nickname / Goes By</label>
+              <input type="text" class="form-control" name="nickname" placeholder="e.g. Tere, Augie, Aneux">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Date of Birth</label>
+              <input type="text" class="form-control" name="dob" placeholder="e.g. 1965 or March 3, 1965">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Date of Death <span class="text-muted">(if deceased)</span></label>
+              <input type="text" class="form-control" name="dod" placeholder="Leave blank if living">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Relationship to John Sr.</label>
+              <input type="text" class="form-control" name="relationship"
+                     placeholder="e.g. Nephew, Sister-in-law, Granddaughter">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Generation <span class="text-danger">*</span></label>
+              <select class="form-select" name="generation" id="addPersonGeneration" required>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Family Branch <span class="text-danger">*</span></label>
+              <select class="form-select" name="familyBranch" id="addPersonBranch" required>
+                <option value="">Select branch…</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Email <span class="text-muted">(optional)</span></label>
+              <input type="email" class="form-control" name="email">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Notes</label>
+              <textarea class="form-control" name="notes" rows="2"
+                        placeholder="Any relevant details about this person"></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Your Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="enteredBy" id="addPersonEnteredBy"
+                     placeholder="Who is filling this in?" required>
+            </div>
+          </div>
+          <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save"></i> Save Person
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="showView('family')">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Add Medical Record ──────────────────────────────────────────── -->
+  <div id="addRecordView" class="view" style="display:none">
+    <h3 class="text-primary fw-bold mb-3">
+      <i class="bi bi-plus-circle"></i> Add Medical Record
+    </h3>
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="alert alert-info small mb-3">
+          <i class="bi bi-info-circle me-1"></i>
+          <strong>What counts as High priority?</strong>
+          Conditions that are hereditary or genetic — e.g. heart disease, diabetes, cancer, Alzheimer's.
+          Medium = chronic but not inherited. Low = minor or one-time.
+        </div>
+        <form id="addRecordForm" onsubmit="submitAddRecord(event)">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Family Member <span class="text-danger">*</span></label>
+              <select class="form-select" name="personId" id="recordPersonSelect" required>
+                <option value="">Select person…</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Medical Condition <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="condition" required
+                     placeholder="e.g. Type 2 Diabetes, Hypertension, Colon Cancer">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
+              <select class="form-select" name="category" id="recordCategory" required>
+                <option value="">Select…</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Importance Tier <span class="text-danger">*</span></label>
+              <select class="form-select" name="tier" required>
+                <option value="">Select…</option>
+                <option value="High">High — Genetic / Hereditary / Critical</option>
+                <option value="Medium">Medium — Chronic, not hereditary</option>
+                <option value="Low">Low — Minor or one-time</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Status</label>
+              <select class="form-select" name="status">
+                <option value="Active">Active / Ongoing</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Deceased">Person deceased with this condition</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Age at Diagnosis</label>
+              <input type="text" class="form-control" name="ageAtDiagnosis" placeholder="e.g. 58">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Year Diagnosed</label>
+              <input type="text" class="form-control" name="yearDiagnosed" placeholder="e.g. 1998">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Privacy Level</label>
+              <select class="form-select" name="privacyLevel">
+                <option value="Public">Public — All family members</option>
+                <option value="BranchOnly">Branch Only — My family branch</option>
+                <option value="Private">Private — Admins only</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Notes / Details</label>
+              <textarea class="form-control" name="notes" rows="3"
+                        placeholder="Medications, treatments, additional context, cause of death…"></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Your Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="enteredBy" id="recordEnteredBy"
+                     placeholder="Who is filling this in?" required>
+            </div>
+          </div>
+          <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save"></i> Save Record
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="showView('medical')">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Admin Panel ────────────────────────────────────────────────── -->
+  <div id="adminView" class="view" style="display:none">
+    <h3 class="text-warning fw-bold mb-3">
+      <i class="bi bi-shield-lock"></i> Admin Panel
+    </h3>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header section-header">Summary</div>
+          <div class="card-body" id="adminSummary">Loading…</div>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header section-header">All Medical Records (including private)</div>
+          <div class="card-body p-0" id="adminMedical">Loading…</div>
+        </div>
+      </div>
+    </div>
+    <div class="card border-0 shadow-sm mt-3">
+      <div class="card-header section-header">All Registered Family Members</div>
+      <div class="card-body p-0" id="adminPeople">Loading…</div>
+    </div>
+  </div>
+
+</div><!-- /appBody -->
+
+<!-- ── Admin Login Modal ───────────────────────────────────────────── -->
+<div class="modal fade" id="adminModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h6 class="modal-title"><i class="bi bi-shield-lock"></i> Admin Login</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label small fw-semibold">Admin Password</label>
+        <input type="password" class="form-control" id="adminPwInput"
+               onkeyup="if(event.key==='Enter') submitAdminLogin()">
+        <div id="adminPwError" class="text-danger small mt-2" style="display:none">
+          Incorrect password. Please try again.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="submitAdminLogin()">Login</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Person Detail Modal ────────────────────────────────────────── -->
+<div class="modal fade" id="personModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="personModalTitle">Family Member</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="personModalBody">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<?!= include('JavaScript'); ?>
+</body>
+</html>
