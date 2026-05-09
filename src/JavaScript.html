@@ -178,7 +178,7 @@ function renderDashboard() {
           '</div>';
       }).join('')
     : '<p class="text-muted small">No records yet. ' +
-      '<a href="#" onclick="showView(\'addRecord\')">Add the first one</a>.</p>';
+      '<a href="javascript:void(0)" onclick="showView(\'addRecord\')">Add the first one</a>.</p>';
 }
 
 // ── Family Members ─────────────────────────────────────────────────────
@@ -190,9 +190,13 @@ function renderFamilyList(people) {
     return;
   }
 
+  // Quick ID lookup
+  var byId = {};
+  people.forEach(function(p) { byId[p.ID] = p; });
+
   // Group by generation
   var groups = {};
-  people.forEach(function (p) {
+  people.forEach(function(p) {
     var g = p.Generation || 'Unknown';
     if (!groups[g]) groups[g] = [];
     groups[g].push(p);
@@ -204,40 +208,82 @@ function renderFamilyList(people) {
     Gen1: 'Great-Great-Grandparents',
     Gen2: 'Great-Grandparents',
     Gen3: 'Grandparents — Morris & Esther Redmann',
-    Gen4: "Parents' Generation (grandparents' children)",
+    Gen4: "Grandparents' Children (John's Uncles & Aunt)",
     Gen5: "John's Generation — the 8 siblings",
-    Gen6: 'Children of the Siblings',
-    Gen7: 'Grandchildren',
+    Gen6: 'Gen 6 — Children of the Siblings',
+    Gen7: 'Gen 7 — Grandchildren',
     Unknown: 'Other'
   };
+  var genIndent = { Gen0:0, Gen1:0, Gen2:1, Gen3:2, Gen4:3, Gen5:4, Gen6:5, Gen7:6, Unknown:0 };
 
-  var html = '';
-  genOrder.forEach(function (gen) {
+  var html = '<div class="col-12"><div class="family-tree">';
+
+  genOrder.forEach(function(gen) {
     if (!groups[gen]) return;
-    html += '<div class="col-12 mt-3 mb-1"><p class="gen-heading">' +
-            (genLabels[gen] || gen) + '</p></div>';
-    groups[gen].forEach(function (p) {
-      var medCount = (appData.medical || []).filter(function (m) { return m.PersonID === p.ID; }).length;
-      var isDeceased = p.DOD ? true : false;
-      html += '<div class="col-6 col-md-4 col-lg-3">' +
-        '<div class="card person-card border-0 shadow-sm h-100" onclick="showPersonDetail(\'' + p.ID + '\')">' +
-        '<div class="card-body">' +
-        '<h6 class="card-title text-primary">' + esc(formatName(p)) + '</h6>' +
-        (p.RelationshipToJohn ? '<div class="text-muted small">' + esc(p.RelationshipToJohn) + '</div>' : '') +
-        (p.FamilyBranch && p.FamilyBranch !== 'Ancestors'
-          ? '<div class="text-muted small">' + esc(p.FamilyBranch) + '</div>' : '') +
-        '<div class="small mt-1">' +
-        (p.DOB ? '<span class="text-muted">b. ' + esc(String(p.DOB)) + '</span>' : '') +
-        (isDeceased ? ' <span class="text-muted">d. ' + esc(String(p.DOD)) + '</span>' : '') +
-        '</div>' +
-        (medCount > 0
-          ? '<span class="badge bg-info text-dark mt-1">' + medCount + ' record' + (medCount > 1 ? 's' : '') + '</span>'
-          : '') +
-        '</div></div></div>';
+    var genPeople = groups[gen];
+    var indent = (genIndent[gen] || 0) * 20;
+
+    // Pair spouses within this generation
+    var unitPaired = {};
+    var units = [];
+
+    genPeople.forEach(function(p) {
+      if (unitPaired[p.ID]) return;
+      if (p.SpouseOfID && byId[p.SpouseOfID]) {
+        var spouse = byId[p.SpouseOfID];
+        var spouseInSet = genPeople.indexOf(spouse) !== -1;
+        if (spouseInSet && !unitPaired[spouse.ID]) {
+          units.push([p, spouse]);
+          unitPaired[p.ID] = true;
+          unitPaired[spouse.ID] = true;
+          return;
+        }
+      }
+      var isClaimedSpouse = genPeople.some(function(other) {
+        return other.SpouseOfID === p.ID && !unitPaired[other.ID];
+      });
+      if (!isClaimedSpouse) {
+        units.push([p]);
+        unitPaired[p.ID] = true;
+      }
     });
+    genPeople.forEach(function(p) {
+      if (!unitPaired[p.ID]) { units.push([p]); unitPaired[p.ID] = true; }
+    });
+
+    var borderW = indent > 0 ? '3' : '0';
+    html += '<div class="tree-gen-block" style="padding-left:' + (indent + 12) + 'px;border-left-width:' + borderW + 'px">';
+    html += '<div class="tree-gen-label">' + esc(genLabels[gen] || gen) + '</div>';
+    html += '<div class="tree-gen-row">';
+
+    units.forEach(function(unit) {
+      html += '<div class="tree-unit">';
+      unit.forEach(function(p, idx) {
+        if (idx > 0) html += '<span class="tree-couple-sym">×</span>';
+        var medCount = (appData.medical || []).filter(function(m) { return m.PersonID === p.ID; }).length;
+        var dec = p.DOD ? ' tree-deceased' : '';
+        var firstName = (p.FirstName || '') + (p.Nickname ? ' "' + p.Nickname + '"' : '');
+        var lastName  = p.LastName || '';
+        var dates = '';
+        if (p.DOB && p.DOD)      dates = String(p.DOB) + '–' + String(p.DOD);
+        else if (p.DOB)          dates = 'b. ' + String(p.DOB);
+        else if (p.DOD)          dates = 'd. ' + String(p.DOD);
+
+        html += '<div class="tree-person' + dec + '" onclick="showPersonDetail(\'' + p.ID + '\')">';
+        html += '<div class="tree-pname">' + esc(firstName) + '</div>';
+        if (lastName) html += '<div class="tree-plname">' + esc(lastName) + '</div>';
+        if (dates)    html += '<div class="tree-pdates">' + esc(dates) + '</div>';
+        if (medCount > 0) html += '<span class="badge bg-primary tree-pbadge">' + medCount + ' rec</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+
+    html += '</div></div>';
   });
 
-  container.innerHTML = html || '<div class="col-12"><p class="text-muted">No results.</p></div>';
+  html += '</div></div>';
+  container.innerHTML = html;
 }
 
 function filterFamily() {
@@ -327,7 +373,7 @@ function renderMedicalList(records) {
   var container = document.getElementById('medicalList');
   if (!records || records.length === 0) {
     container.innerHTML = '<p class="text-muted">No medical records found. ' +
-      '<a href="#" onclick="showView(\'addRecord\')">Add the first record</a>.</p>';
+      '<a href="javascript:void(0)" onclick="showView(\'addRecord\')">Add the first record</a>.</p>';
     return;
   }
 

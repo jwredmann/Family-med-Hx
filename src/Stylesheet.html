@@ -153,4 +153,85 @@ body {
   #mainNav .navbar-brand { font-size: 0.88rem; }
   .medical-table { font-size: 0.75rem; }
 }
+
+/* ── Family Tree View ────────────────────────────────────────────────── */
+.family-tree { padding: 0.25rem 0 0.5rem; }
+
+.tree-gen-block {
+  border-left: 3px solid var(--redmann-navy);
+  margin-bottom: 3px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-right: 4px;
+}
+.tree-gen-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--redmann-navy);
+  margin-bottom: 6px;
+  opacity: 0.85;
+}
+.tree-gen-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: flex-start;
+}
+.tree-unit {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+.tree-couple-sym {
+  font-size: 0.8rem;
+  color: #aaa;
+  align-self: center;
+  padding: 0 1px;
+}
+.tree-person {
+  background: #fff;
+  border: 1px solid #d0d9e8;
+  border-radius: 7px;
+  padding: 5px 8px;
+  cursor: pointer;
+  min-width: 90px;
+  max-width: 160px;
+  transition: box-shadow 0.15s, transform 0.15s, border-color 0.15s;
+}
+.tree-person:hover {
+  box-shadow: 0 3px 10px rgba(26,58,107,0.18);
+  transform: translateY(-2px);
+  border-color: var(--redmann-blue);
+}
+.tree-deceased { opacity: 0.6; }
+.tree-pname {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--redmann-navy);
+  line-height: 1.25;
+}
+.tree-plname {
+  font-size: 0.78rem;
+  color: #444;
+  line-height: 1.2;
+}
+.tree-pdates {
+  font-size: 0.65rem;
+  color: #888;
+  margin-top: 1px;
+}
+.tree-pbadge {
+  font-size: 0.6rem;
+  padding: 1px 4px;
+  margin-top: 3px;
+  display: inline-block;
+  border-radius: 4px;
+}
+@media (max-width: 576px) {
+  .tree-gen-block { padding-left: 10px !important; }
+  .tree-person { min-width: 75px; max-width: 130px; }
+  .tree-pname  { font-size: 0.72rem; }
+}
 </style>
