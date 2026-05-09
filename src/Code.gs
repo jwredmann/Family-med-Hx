@@ -25,7 +25,7 @@ var FAMILY_BRANCHES = [
 var ADMIN_NAMES = [
   'John W. Redmann, Sr.',
   'Amanda Redmann',
-  'Christian Courier',
+  'Christian Korver',
   'Anna Redmann',
   'Mary Redmann',
   'Tara Redmann',
@@ -281,18 +281,18 @@ function populatePeople(sheet) {
   //          Email, IsAdmin, Notes, EnteredBy, DateEntered
   var rows = [
 
-    // ── Distant Ancestors (Gen 0) ───────────────────────────────────────
+    // ── Distant Ancestors (Gen 0) ────────────────────────────────────────
     ['P001','Timothy','O\'Brien','','1823','1873',
      'Gen0','Ancestors','Great-Great-Grandfather (O\'Brien line)',
      '','','','','FALSE',
-     'Root ancestor of the O\'Brien descendant chart','System',now],
+     'Root ancestor of the O\'Brien line; from Ireland','System',now],
 
     ['P002','Margaret Abbie','Collins','','1829','1904',
      'Gen0','Ancestors','Great-Great-Grandmother (O\'Brien line)',
      'P001','','','','FALSE',
      'Wife of Timothy O\'Brien','System',now],
 
-    // ── Great-Grandparents (Gen 1 / 2) ─────────────────────────────────
+    // ── Great-Grandparents (Gen 2) ───────────────────────────────────────
     ['P003','Joseph Vincent','Redmann','','1845','1920',
      'Gen2','Ancestors','Great-Grandfather (paternal)',
      '','','','','FALSE','','System',now],
@@ -302,109 +302,287 @@ function populatePeople(sheet) {
      'P003','P001','P002','','FALSE',
      'Daughter of Timothy O\'Brien; married Joseph Vincent Redmann','System',now],
 
-    // ── Grandparents (Gen 3) ────────────────────────────────────────────
+    // ── Grandparents (Gen 3) ─────────────────────────────────────────────
     ['P005','Morris Benjamin','Redmann Sr.','','1896','1955',
      'Gen3','Ancestors','Grandfather (paternal)',
      '','P003','P004','','FALSE',
-     'Morris Benjamin Redmann Sr.','System',now],
+     'Prominent New Orleans attorney; partner Guste, Barnett & Redmann','System',now],
 
     ['P006','Esther Alice','Joyce','Esther','1899','1956',
      'Gen3','Ancestors','Grandmother (paternal)',
      'P005','','','','FALSE',
-     'née Joyce; married Morris Benjamin Redmann Sr.','System',now],
+     'née Joyce; excellent pianist; married Morris Benjamin Redmann Sr. Sept 3, 1924','System',now],
 
-    // ── Parents\' Generation — Grandparents\' children (Gen 4) ───────────
+    // ── Grandparents\' Children — John\'s Uncles & Aunt (Gen 4) ───────────
+    // Morris and Esther had 10 children: 9 sons, 1 daughter
     ['P010','Morris Benjamin','Redmann Jr.','Morris Jr.','1925','1945',
-     'Gen4','Ancestors','Uncle (paternal — deceased young)',
+     'Gen4','Ancestors','Uncle (paternal — KIA WWII)',
      '','P005','P006','','FALSE',
-     'Died age 20, likely in WWII','System',now],
+     'Killed in action Jan 14, 1945, Battle of the Bulge, Ardennes. 94th Infantry, Patton\'s Army. Never married.','System',now],
 
     ['P011','Esther Alice','Redmann','','1926','2010',
      'Gen4','Ancestors','Aunt (the one daughter among 9 sons)',
      '','P005','P006','','FALSE',
-     'Order of Saint Ursula (OSU) — religious sister','System',now],
+     'Order of Saint Ursula (OSU) — Sister Mary Esther Redmann; canon judge for the Catholic Church','System',now],
 
     ['P012','William Vincent','Redmann','','1927','2005',
-     'Gen4','Ancestors','Uncle (paternal)',
-     '','P005','P006','','FALSE','','System',now],
+     'Gen4','Ancestors','Father (son of Morris & Esther)',
+     'P029','P005','P006','','FALSE',
+     'Judge, Louisiana 4th Circuit Court of Appeal; taught Loyola Law; played piano by ear; buried Dec 26, 2007','System',now],
 
-    ['P013','Kerry Patrick','Redmann','','1929','2006',
+    ['P013','Kerry Patrick','Redmann Sr.','','1929','2006',
      'Gen4','Ancestors','Uncle (paternal)',
-     '','P005','P006','','FALSE','','System',now],
+     '','P005','P006','','FALSE',
+     'USAF veteran; electrical manufacturer\'s representative; author "Unfinished Journey: A WWII Remembrance"','System',now],
 
     ['P014','Richard Pius','Redmann','','1933','2007',
      'Gen4','Ancestors','Uncle (paternal)',
-     '','P005','P006','','FALSE','','System',now],
+     '','P005','P006','','FALSE',
+     'Entered Gethsemani Abbey (Trappist) in Kentucky','System',now],
 
-    ['P015','Jerry','Redmann','','','',
+    ['P015','Jerome Joyce','Redmann','Jerry','','',
+     'Gen4','Ancestors','Uncle (paternal)',
+     '','P005','P006','','FALSE','Goes by Jerry','System',now],
+
+    ['P016','Ralph Christopher','Redmann','','','',
      'Gen4','Ancestors','Uncle (paternal)',
      '','P005','P006','','FALSE','','System',now],
 
-    ['P016','Ralph','Redmann','','','',
+    ['P017','David Edmund','Redmann','','','',
      'Gen4','Ancestors','Uncle (paternal)',
      '','P005','P006','','FALSE','','System',now],
 
-    ['P017','David','Redmann','','','',
+    ['P018','Robert Eugene','Redmann','Bob','','',
      'Gen4','Ancestors','Uncle (paternal)',
-     '','P005','P006','','FALSE','','System',now],
+     '','P005','P006','','FALSE','Goes by Bob','System',now],
 
-    ['P018','Robert','Redmann','','','',
+    ['P019','Ronald Louis','Redmann','Ronnie','','',
      'Gen4','Ancestors','Uncle (paternal)',
-     '','P005','P006','','FALSE','','System',now],
+     '','P005','P006','','FALSE',
+     'Goes by Ronnie; co-compiled "180 Songs Esther Played" songbook with brothers David and Robert (2016)','System',now],
 
-    // ── John\'s Generation — the 8 siblings (Gen 5) ─────────────────────
-    ['P020','John W.','Redmann, Sr.','','','',
-     'Gen5','John W. Redmann, Sr.','Self — Primary Administrator',
-     '','','','','TRUE',
-     'Project creator and primary administrator','System',now],
+    // ── William\'s Wife — Mother of the 8 Siblings (Gen 4) ───────────────
+    ['P029','Ana Maria','Macouzet Redmann','','1932','2009',
+     'Gen4','Ancestors','Mother (wife of Judge William Redmann)',
+     'P012','','','','FALSE',
+     'née Macouzet Munoz; born July 26, 1932, Pachuca, Mexico; daughter of Jaime Macouzet Iturbide; married Dec 26, 1955 in Morelia, Mexico; died Dec 24, 2009 in Mandeville, LA','System',now],
 
+    // ── John\'s Generation — the 8 siblings, children of William & Ana Maria (Gen 5) ──
+    // Siblings listed oldest to youngest; John is the youngest (#8)
+    ['P022','Ana Maria','Redmann Chandler','Aneux','1956','',
+     'Gen5','Ana Maria Redmann Chandler','Sister (oldest — sibling #1 of 8)',
+     '','P012','P029','','FALSE',
+     'Goes by Aneux; artist and musician; resides Mandeville, LA','System',now],
+
+    ['P023','Mary Esther','Redmann','','1957','',
+     'Gen5','Mary Redmann','Sister (sibling #2 of 8)',
+     '','P012','P029','','TRUE',
+     'Musician, educator; founder Children\'s Theater of New Orleans; Admin','System',now],
+
+    ['P024','Eugene P.','Redmann','Gene','1958','',
+     'Gen5','Eugene Redmann','Brother (sibling #3 of 8)',
+     '','P012','P029','','FALSE',
+     'Owner, Law Office of Eugene Redmann, Metairie; married Michelle Scafidi Redmann','System',now],
+
+    ['P025','Teresita Maria','Redmann','Tere','1959','',
+     'Gen5','Teresita Redmann','Sister (sibling #4 of 8)',
+     '','P012','P029','','FALSE',
+     'Goes by Tere; former social worker; resides New Orleans','System',now],
+
+    ['P026','Cecilia','Redmann Whitehurst','Ceci','1960','',
+     'Gen5','Ceci Redmann Whitehurst','Sister (sibling #5 of 8)',
+     '','P012','P029','','FALSE',
+     'Special education and art teacher; remarried Andrew Ewell Whitehurst (2008)','System',now],
+
+    ['P027','Alice Elizabeth','Redmann','Bito','1961','',
+     'Gen5','Alice Redmann','Sister (sibling #6 of 8)',
+     '','P012','P029','','FALSE',
+     'Goes by Bito; artist','System',now],
+
+    ['P028','Maria Goretti','Redmann Treffinger','','1962','',
+     'Gen5','Maria Redmann','Sister (sibling #7 of 8)',
+     '','P012','P029','','FALSE',
+     'Attorney, Dept of Child & Family Services; co-founder International School of Louisiana and L\'Ecole Bilangue; married Jeffrey Treffinger','System',now],
+
+    ['P020','John W.','Redmann, Sr.','','1963','',
+     'Gen5','John W. Redmann, Sr.','Self — Primary Administrator (youngest sibling, #8 of 8)',
+     '','P012','P029','','TRUE',
+     'Trial attorney; owner Law Office of John W. Redmann LLC, Gretna, LA; born 1963','System',now],
+
+    // ── Spouses of John\'s Generation (Gen 5) ────────────────────────────
     ['P021','Amanda Marie','Redmann','Amanda','','',
      'Gen5','John W. Redmann, Sr.','Wife of John Sr.',
-     'P020','','','','TRUE','Admin','System',now],
+     'P020','','','','TRUE',
+     'née Blackley; M.Ed.; grammar school teacher and reading specialist; Admin','System',now],
 
-    ['P022','Ana Maria','Redmann Chandler','Aneux','','',
-     'Gen5','Ana Maria Redmann Chandler','Sister (oldest sibling)',
-     '','','','','FALSE','Goes by Aneux','System',now],
+    ['P033','Howard Austin','Chandler','','1953','2011',
+     'Gen5','Ana Maria Redmann Chandler','Husband of Ana Maria Chandler',
+     'P022','','','','FALSE',
+     'Electrical engineer/acoustical scientist, US Navy Stennis Space Center; died 2011','System',now],
 
-    ['P023','Mary','Redmann','','','',
-     'Gen5','Mary Redmann','Sister',
-     '','','','','TRUE','Admin','System',now],
+    ['P034','Michelle','Scafidi Redmann','','','',
+     'Gen5','Eugene Redmann','Wife of Eugene Redmann',
+     'P024','','','','FALSE',
+     'Manager at Law Office of Eugene Redmann, Metairie; mother of Christian Korver','System',now],
 
-    ['P024','Eugene','Redmann','','','',
-     'Gen5','Eugene Redmann','Brother',
-     '','','','','FALSE','','System',now],
+    ['P035','Jeffrey','Treffinger','','','',
+     'Gen5','Maria Redmann','Husband of Maria Redmann',
+     'P028','','','','FALSE',
+     'Design/build consultant; married Maria Goretti Redmann','System',now],
 
-    ['P025','Teresita','Redmann','Tere','','',
-     'Gen5','Teresita Redmann','Sister',
-     '','','','','FALSE','Goes by Tere','System',now],
+    ['P036','Andrew Ewell','Whitehurst','','','',
+     'Gen5','Ceci Redmann Whitehurst','Husband of Ceci Whitehurst',
+     'P026','','','','FALSE',
+     'Water Program Director, Healthy Gulf; married Ceci in 2008','System',now],
 
-    ['P026','Ceci','Redmann Whitehurst','','','',
-     'Gen5','Ceci Redmann Whitehurst','Sister',
-     '','','','','FALSE','','System',now],
+    // ── Children of the 8 Siblings (Gen 6) ───────────────────────────────
 
-    ['P027','Alice','Redmann','','','',
-     'Gen5','Alice Redmann','Sister',
-     '','','','','FALSE','','System',now],
+    // -- Ana Maria\'s children (branch: Ana Maria Redmann Chandler) --
+    ['P040','Zachary William','Chandler','','1988','',
+     'Gen6','Ana Maria Redmann Chandler','Son of Ana Maria',
+     '','P033','P022','','FALSE','','System',now],
 
-    ['P028','Maria','Redmann','','','',
-     'Gen5','Maria Redmann','Sister',
-     '','','','','FALSE','','System',now],
+    // -- Mary\'s children (branch: Mary Redmann) --
+    ['P041','Danielle Marie','Palmatier','','1980','',
+     'Gen6','Mary Redmann','Daughter of Mary',
+     '','','P023','','FALSE',
+     'Research attorney, Louisiana Fifth Circuit Court of Appeal; married Kevin Michael Mitternight','System',now],
+
+    ['P042','Michael McGrath','Duran Jr.','Mikey','1995','',
+     'Gen6','Mary Redmann','Son of Mary',
+     '','','P023','','FALSE',
+     'Goes by Mikey; singer/songwriter; Top 120 American Idol 2015, Top 100 American Idol 2018','System',now],
+
+    // -- Eugene\'s stepchild (branch: Eugene Redmann) --
+    ['P043','Christian','Korver','','1983','',
+     'Gen6','Eugene Redmann','Stepson of Eugene Redmann',
+     '','','P034','','TRUE',
+     'Stepson of Eugene; biological father Clayton Korver; married Aimee Folse Korver (b.1981); tech-savvy admin; resides Metairie, LA','System',now],
+
+    // -- Teresita\'s children (branch: Teresita Redmann) --
+    ['P044','Benjamin James','Bible','Ben','1989','',
+     'Gen6','Teresita Redmann','Son of Teresita',
+     '','','P025','','TRUE',
+     'Goes by Ben; Admin','System',now],
+
+    ['P045','Samantha Joan','Bible','Sammy','1992','',
+     'Gen6','Teresita Redmann','Daughter of Teresita',
+     '','','P025','','FALSE',
+     'Goes by Sammy','System',now],
+
+    ['P046','William Patrick','Bible','Will','1994','',
+     'Gen6','Teresita Redmann','Son of Teresita',
+     '','','P025','','FALSE',
+     'Goes by Will','System',now],
+
+    // -- Ceci\'s children from first marriage to William Warren Smith --
+    ['P047','Joshua William','Smith','','1986','',
+     'Gen6','Ceci Redmann Whitehurst','Son of Ceci (Smith)',
+     '','','P026','','FALSE',
+     'Director of Operations at MyFreeDoctor.com; married Asha Gross Smith (b.1987)','System',now],
+
+    ['P048','Esther Margaret','Smith','','1988','',
+     'Gen6','Ceci Redmann Whitehurst','Daughter of Ceci (Smith)',
+     '','','P026','','FALSE',
+     'Theatre teacher; married Jed Newell (musician) 2013, divorced 2021','System',now],
+
+    ['P049','Veronica','Redmann Smith','','1990','',
+     'Gen6','Ceci Redmann Whitehurst','Daughter of Ceci (Smith)',
+     '','','P026','','FALSE',
+     'Oncology nurse','System',now],
+
+    // -- Ceci\'s stepchildren via Andrew Whitehurst --
+    ['P050','Claire D.','Whitehurst','','1991','',
+     'Gen6','Ceci Redmann Whitehurst','Stepdaughter of Ceci (Whitehurst)',
+     '','P036','','','FALSE',
+     'Artist/teacher; stepchild of Ceci via Andrew Whitehurst','System',now],
+
+    ['P051','Andrew L.','Whitehurst','','1992','',
+     'Gen6','Ceci Redmann Whitehurst','Stepson of Ceci (Whitehurst)',
+     '','P036','','','FALSE',
+     'Musician; stepchild of Ceci via Andrew Whitehurst','System',now],
+
+    // -- Alice\'s children (branch: Alice Redmann) --
+    ['P052','Amanda','Redmann Toups','','2002','',
+     'Gen6','Alice Redmann','Daughter of Alice',
+     '','','P027','','FALSE',
+     'Father Ryan Toups; enrolled St. Mary\'s College, Moraga, CA (2021)','System',now],
+
+    // -- Maria\'s children (branch: Maria Redmann) --
+    ['P053','Ana Maria','Treffinger','','','',
+     'Gen6','Maria Redmann','Daughter of Maria',
+     '','P035','P028','','FALSE','','System',now],
+
+    ['P054','Grace Margaret','Treffinger','','','',
+     'Gen6','Maria Redmann','Daughter of Maria',
+     '','P035','P028','','FALSE','','System',now],
+
+    ['P055','Cecilia Augusta','Treffinger','','','',
+     'Gen6','Maria Redmann','Daughter of Maria',
+     '','P035','P028','','FALSE','','System',now],
 
     // ── John\'s Children (Gen 6) ─────────────────────────────────────────
-    ['P030','John William','Redmann, Jr.','William','','',
+    ['P030','John William','Redmann, Jr.','William','2009','',
      'Gen6','John W. Redmann, Sr.','Son of John Sr.',
      '','P020','P021','','FALSE',
      'Goes by William or Wm','System',now],
 
-    ['P031','Adelaide','Redmann','Adele','','',
+    ['P031','Adelaide Maria','Redmann','Adele','2012','',
      'Gen6','John W. Redmann, Sr.','Daughter of John Sr.',
      '','P020','P021','','FALSE',
      'Goes by Adele','System',now],
 
-    ['P032','Augustine','Redmann','Augie','','',
+    ['P032','Augustine Fredric','Redmann','Augie','2016','',
      'Gen6','John W. Redmann, Sr.','Son of John Sr.',
      '','P020','P021','','FALSE',
-     'Goes by Augie','System',now]
+     'Goes by Augie','System',now],
+
+    // ── Grandchildren (Gen 7) ────────────────────────────────────────────
+
+    // -- Danielle Palmatier\'s children (Mary\'s grandchildren) --
+    ['P060','Wesley Joseph','Mitternight','','2009','',
+     'Gen7','Mary Redmann','Grandson of Mary (via Danielle)',
+     '','','P041','','FALSE','Father Kevin Michael Mitternight','System',now],
+
+    ['P061','Wyatt Reid','Mitternight','','2011','',
+     'Gen7','Mary Redmann','Grandson of Mary (via Danielle)',
+     '','','P041','','FALSE','Father Kevin Michael Mitternight','System',now],
+
+    ['P062','Julia Maria','Mitternight','','2017','',
+     'Gen7','Mary Redmann','Granddaughter of Mary (via Danielle)',
+     '','','P041','','FALSE','Father Kevin Michael Mitternight','System',now],
+
+    ['P063','William Michael','Mitternight','','2019','',
+     'Gen7','Mary Redmann','Grandson of Mary (via Danielle)',
+     '','','P041','','FALSE','Father Kevin Michael Mitternight','System',now],
+
+    // -- Esther Smith\'s children (Ceci\'s grandchildren) --
+    ['P064','Cabe Warren','Smith','','2013','',
+     'Gen7','Ceci Redmann Whitehurst','Grandson of Ceci (via Esther)',
+     '','','P048','','FALSE','Father Jed Newell (musician)','System',now],
+
+    ['P065','Jesse William','Smith','','2015','',
+     'Gen7','Ceci Redmann Whitehurst','Grandson of Ceci (via Esther)',
+     '','','P048','','FALSE','Father Jed Newell (musician)','System',now],
+
+    // -- Veronica Smith\'s children (Ceci\'s grandchildren) --
+    ['P066','Ana Lynn','Hamilton','','2008','',
+     'Gen7','Ceci Redmann Whitehurst','Granddaughter of Ceci (via Veronica)',
+     '','','P049','','FALSE','Father Aaron J. Hamilton','System',now],
+
+    ['P067','Alexander Clark','Watters','','','',
+     'Gen7','Ceci Redmann Whitehurst','Grandson of Ceci (via Veronica)',
+     '','','P049','','FALSE','Father Jacob Watters','System',now],
+
+    // -- Christian Korver\'s children (Eugene\'s step-grandchildren) --
+    ['P068','Chloe Camille','Korver','','2012','',
+     'Gen7','Eugene Redmann','Step-Granddaughter of Eugene (via Christian)',
+     '','P043','','','FALSE','Mother Aimee Folse Korver (b.1981)','System',now],
+
+    ['P069','Christian Paul','Korver','','2015','',
+     'Gen7','Eugene Redmann','Step-Grandson of Eugene (via Christian)',
+     '','P043','','','FALSE','Mother Aimee Folse Korver (b.1981)','System',now]
+
   ];
 
   rows.forEach(function(r) { sheet.appendRow(r); });
